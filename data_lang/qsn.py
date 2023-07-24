@@ -183,12 +183,15 @@ def maybe_shell_encode(s, flags=0):
     """
     # Shell strings sometimes need the $'' prefix, e.g. for $'\x00'.
 
-    # QSN constructs that shell doesn't understand:
-    #   \0 is ambiguous; needs to be \x00 (not \000)    TODO: Fix this
+    # Shell vs. QSN
+    #   NUL byte: emit \x00 instead of \0 in shell, because if you emit '1'
+    #   after, it will be an octal escape \01.  Likweise, emitting 01 or 001
+    #   will cause \001 and \0001, both of which are octal escapes.  Neither
+    #   QSN or J8 has octal escapes like \0ddd.
     #
-    #   \u{3bc} is not understood.  This means taht bit8_display should be
-    #   BIT8_UTF8, not BIT8_U_ESCAPE.  In that mode, low bytes are \x01 instead
-    #   of \u{1}, and high bytes are *literal* UTF-8.
+    #   QSN understands \u{3bc}, but shell doesn't.  This means that
+    #   bit8_display should be BIT8_UTF8, not BIT8_U_ESCAPE.  In that mode, low
+    #   bytes are \x01 instead of \u{1}, and high bytes are *literal* UTF-8.
     #
     # In shell, you can decode QSN with something like:
     #
@@ -298,7 +301,9 @@ def _encode_bytes_x(s, shell_compat, parts):
         elif byte == '\t':
             part = '\\t'
         elif byte == '\0':
-            part = '\\x00' if shell_compat else '\\0'
+            # never generate \0 - JSON and J8 don't have it
+            part = '\\x00'
+            #part = '\\x00' if shell_compat else '\\0'
 
         elif IsUnprintableLow(byte):
             # BIT8_UTF8 is used for shell, so print it with \x.
@@ -394,7 +399,8 @@ def _encode_runes(s, bit8_display, shell_compat, parts):
             elif byte == '\t':
                 out = '\\t'
             elif byte == '\0':
-                out = '\\x00' if shell_compat else '\\0'
+                out = '\\x00'
+                #out = '\\x00' if shell_compat else '\\0'
             elif IsUnprintableLow(byte):
                 # Even in utf-8 mode, don't print control chars literally!
                 # Also, somehow I think it's more readable to display \x01 than \u{1}.

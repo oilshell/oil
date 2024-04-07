@@ -264,6 +264,7 @@ class BoolParser(object):
                 if t2_bool_id == Id.BoolBinary_EqualTilde:
                     self._Next(lex_mode=lex_mode_e.BashRegex)
                     right = self.ParseRegex()
+                    #log('RIGHT %s', right)
                 else:
                     self._Next()
                     right = self.cur_word
@@ -288,6 +289,7 @@ class BoolParser(object):
                 return bool_expr.WordTest(w)
 
         if self.bool_id == Id.Op_LParen:
+            #self.w_parser.lexer.PushHint(Id.Op_RParen, Id.Right_DBracketGroup)
             self._Next()
             node = self.ParseExpr()
             if self.bool_id != Id.Op_RParen:

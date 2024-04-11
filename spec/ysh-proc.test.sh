@@ -291,3 +291,59 @@ loop
 brace
 ## END
 
+#### Test varargs and blocks
+shopt --set ysh:upgrade
+
+proc DUMP(...a;...b;...c; d) {
+  echo @a
+  echo @b
+  for i, k, v in (c) {
+    echo "$i - $k - $v"
+  }
+  # TODO : figure out how to inspect blocks
+}
+DUMP a b c ('d', 'e', 'f', h = "i", j = "k") {
+  echo 0
+}
+## STDOUT:
+a b c
+d e f
+0 - h - i
+1 - j - k
+## END
+
+#### mixing typed positional varargs and blocks
+shopt --set ysh:upgrade
+
+proc doIt(;...args) {
+  if (len(args) === 1) {
+    eval (args[0])
+  } else {
+    var a = args[0]
+    echo $a
+    var argsRest = args[1:]
+    doIt (...argsRest)
+  }
+}
+
+# all of below work. 
+doIt (1, 2, 3) {
+  echo 4
+}
+
+doIt (1, 2, 3, ^(echo 4))
+
+doIt {
+  echo 1
+}
+## STDOUT:
+1
+2
+3
+4
+1
+2
+3
+4
+1
+## END

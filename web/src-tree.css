@@ -85,6 +85,10 @@ td {
 .line {
   /* like <pre> tag */
   white-space: pre;
+  /* Workaround for Safari
+     https://stackoverflow.com/questions/44754987/getting-osx-safari-to-honor-css-white-space-pre */
+  word-wrap: normal;
+
   color: #141414;  /* almost black */
 }
 

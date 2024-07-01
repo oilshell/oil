@@ -1931,7 +1931,13 @@ class CommandEvaluator(object):
         """
         if cmd_flags & Optimize:
             node = self._RemoveSubshells(node)
-            self._NoForkLast(node)  # turn the last ones into exec
+            # Using _NoForkLast() hides exit code for ERR trap, but only in non-interactive mode!
+            # Example:
+            # - ./bin/osh -c 'trap "echo ERR" ERR ; date X' - does not show ERR
+            # - ./bin/osh -c 'trap "echo ERR" ERR ; date X ; exit' - does show ERR
+            # This is why it is only called interactive mode
+            if self.mutable_opts.Get(option_i.interactive):
+                self._NoForkLast(node)  # turn the last ones into exec
 
         if 0:
             log('after opt:')
@@ -2103,8 +2109,8 @@ class CommandEvaluator(object):
             return
 
         # bash rule - affected by set -o errtrace
-        if self.mem.InsideFunction():
-            return
+        # if self.mem.InsideFunction():
+        #     return
 
         # NOTE: Don't set option_i._running_trap, because that's for
         # RunPendingTraps() in the MAIN LOOP

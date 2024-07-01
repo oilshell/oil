@@ -47,6 +47,7 @@ from typing import Tuple, List, Dict, Optional, Any, cast, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from _devbuild.gen.option_asdl import option_t
+    from builtin import trap_osh
     from core import alloc
     from osh import sh_expr_eval
 
@@ -229,6 +230,31 @@ class ctx_ErrTrap(object):
     def __exit__(self, type, value, traceback):
         # type: (Any, Any, Any) -> None
         self.mem.running_err_trap = False
+
+
+class ctx_HideErrTrap(object):
+    """For trap ERR."""
+
+    def __init__(self, trap_state, errtrace):
+        # type: (trap_osh.TrapState, bool) -> None
+        self.errtrace = errtrace
+        if self.errtrace: return
+        # errtrace is disabled, hide err trap
+        self.trap_state = trap_state
+        self.err_handler = trap_state.GetHook('ERR')
+        trap_state.RemoveUserHook('ERR')
+
+    def __enter__(self):
+        # type: () -> None
+        pass
+
+    def __exit__(self, type, value, traceback):
+        # type: (Any, Any, Any) -> None
+        if self.errtrace: return
+        # errtrace is disabled, restore err trap (that was removed earlier)
+        # unless it has been set meanwhile
+        if self.err_handler and not self.trap_state.GetHook('ERR'):
+            self.trap_state.AddUserHook('ERR', self.err_handler)
 
 
 class ctx_Option(object):

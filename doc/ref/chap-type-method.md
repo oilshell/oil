@@ -114,7 +114,8 @@ referenced with `$1`, `$2`, etc.
 
 Captures can also be named.
 
-    = mystr2 => replace(/ <capture digit{4} as year : int> /, ^"$[year + 1]")
+    = mystr2 => replace(/ <capture digit{4} as year : int> /,
+                        ^"$[year + 1]")
 
 `$0` refers to the entire capture itself in a substitution string.
 
@@ -161,10 +162,10 @@ Matching is done based on bytes, not runes.
 
 ### endsWith()
 
-Like 'startsWith()` but returns true if the _end_ of the string matches.
+Like `startsWith()` but returns true if the _end_ of the string matches.
 
-    = b'123YSH' => endsWith("YSH")  # => true
-    = b'YSH123' => endsWith(/ d+ /) # => true
+    = b'123YSH' => endsWith("YSH")   # => true
+    = b'YSH123' => endsWith(/ d+ /)  # => true
 
 ### trim()
 

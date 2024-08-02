@@ -773,6 +773,11 @@ class Thunk(object):
         """Display for the 'jobs' list."""
         raise NotImplementedError()
 
+    def SkipTrace(self):
+        # type: () -> bool
+        """Returns true if the caller can skip the tracer"""
+        raise NotImplementedError()
+
     def __repr__(self):
         # type: () -> str
         return self.UserString()
@@ -797,6 +802,11 @@ class ExternalThunk(Thunk):
         # We could switch the former but I'm not sure it's necessary.
         tmp = [j8_lite.MaybeShellEncode(a) for a in self.cmd_val.argv]
         return '[process] %s' % ' '.join(tmp)
+
+    def SkipTrace(self):
+        # type: () -> bool
+        """Returns true if the caller can skip the tracer"""
+        return True
 
     def Run(self):
         # type: () -> None
@@ -826,6 +836,11 @@ class SubProgramThunk(Thunk):
         #   Executor.RunPipeline()
         thunk_str = ui.CommandType(self.node)
         return '[subprog] %s' % thunk_str
+
+    def SkipTrace(self):
+        # type: () -> bool
+        """Returns true if the caller can skip the tracer"""
+        return False
 
     def Run(self):
         # type: () -> None
@@ -891,6 +906,11 @@ class _HereDocWriterThunk(Thunk):
         # shells don't have this problem because they use temp files!  That's a bit
         # unfortunate.
         return '[here doc writer]'
+
+    def SkipTrace(self):
+        # type: () -> bool
+        """Returns true if the caller can skip the tracer"""
+        return True
 
     def Run(self):
         # type: () -> None
@@ -1081,7 +1101,9 @@ class Process(Job):
             pyos.Sigaction(SIGTTOU, SIG_DFL)
             pyos.Sigaction(SIGTTIN, SIG_DFL)
 
-            self.tracer.OnNewProcess(pid)
+            if not self.thunk.SkipTrace():
+                self.tracer.OnNewProcess(pid)
+
             # clear foreground pipeline for subshells
             self.thunk.Run()
             # Never returns

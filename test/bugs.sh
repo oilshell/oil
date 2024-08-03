@@ -82,18 +82,4 @@ bug-1853() {
   $sh -c 'trap "echo hi" EXIT; $(which true); echo last'
 }
 
-pipefail-bug() {
-  local sh=${1:-bin/osh}
-  set +o errexit
-
-  # shopt --set no_last_fork causes this, combined with lastpipe
-  # why does it work in bash/dash though?
-  $sh -c '
-set -o errexit
-set -o pipefail
-shopt -s lastpipe
-ls | false | wc -l'
-  echo status=$?
-}
-
 "$@"

@@ -1139,7 +1139,6 @@ def Main(
         except util.UserExit as e:
             status = e.status
     mut_status = IntParamBox(status)
-    log('Running EXIT')
     cmd_ev.MaybeRunExitTrap(mut_status)
 
     multi_trace.WriteDumps()

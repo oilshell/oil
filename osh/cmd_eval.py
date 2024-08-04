@@ -1960,7 +1960,9 @@ class CommandEvaluator(object):
             if self.exec_opts.no_fork_last():
                 self._NoForkLast(node)  # turn the last ones into exec
             # wow: this makes a difference in job control test
-            self._NoForkSentence(node)
+            # yeah there is a PID difference of two
+            # we have to restore nofork
+            #self._NoForkSentence(node)
 
         if 0:
             log('after opt:')

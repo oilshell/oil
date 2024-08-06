@@ -226,8 +226,11 @@ test-errexit-multiple-processes() {
 
   _sep
 
-  # no pipefail
-  _ysh-should-run 'ls | false | wc -l'
+  # BUG introduced by shopt -s no_last_fork!  Combined with shopt -s lastpipe
+  # Even though set -o pipefail is on in YSH, the entire shell does NOT exit!
+
+  #_ysh-should-run 'ls | false | wc -l'
+  _ysh-error-1 'ls | false | wc -l'
 
   _sep
 

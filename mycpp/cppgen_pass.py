@@ -436,7 +436,8 @@ class Generate(ExpressionVisitor[T], StatementVisitor[None]):
                  decl=False,
                  forward_decl=False,
                  stack_roots_warn=None,
-                 dot_exprs=None):
+                 dot_exprs=None,
+                 stack_roots=None):
         self.types = types
         self.const_lookup = const_lookup
         self.f = f
@@ -475,6 +476,7 @@ class Generate(ExpressionVisitor[T], StatementVisitor[None]):
         self.current_method_name = None
 
         self.dot_exprs = dot_exprs
+        self.stack_roots = stack_roots
 
         # So we can report multiple at once
         # module path, line number, message
@@ -1878,16 +1880,6 @@ class Generate(ExpressionVisitor[T], StatementVisitor[None]):
             else:
                 self.def_write(' = it.Value();\n')
 
-            # Register loop variable as a stack root.
-            # Note we have mylib.Collect() in CommandEvaluator::_Execute(), and
-            # it's called in a loop by _ExecuteList().  Although the 'child'
-            # variable is already live by other means.
-            # TODO: Test how much this affects performance.
-            if CTypeIsManaged(c_item_type):
-                self.def_write_ind('  StackRoot _for(&')
-                self.accept(index_expr)
-                self.def_write_ind(');\n')
-
         elif isinstance(item_type, TupleType):  # for x, y in pairs
             if over_dict:
                 assert isinstance(o.index, TupleExpr), o.index
@@ -2851,10 +2843,17 @@ class Generate(ExpressionVisitor[T], StatementVisitor[None]):
 
             # Figure out if we have any roots to write with StackRoots
             roots = []  # keep it sorted
+            full_func_name = None
+            if self.current_func_node:
+                full_func_name = split_py_name(self.current_func_node.fullname)
+
             for lval_name, c_type, is_param in self.prepend_to_block:
                 #self.log('%s %s %s', lval_name, c_type, is_param)
                 if lval_name not in roots and CTypeIsManaged(c_type):
-                    roots.append(lval_name)
+                    if not self.stack_roots or self.stack_roots.needs_root(
+                            full_func_name, split_py_name(lval_name)):
+                        roots.append(lval_name)
+
             #self.log('roots %s', roots)
 
             if len(roots):
